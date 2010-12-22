@@ -86,7 +86,7 @@ public class FlySensor extends Activity implements SensorEventListener {
 			SensorManager.getRotationMatrix(R, I, this.acc_vals, this.mag_vals);
 			SensorManager.getOrientation(R, this.actual_orientation);
 			String out = String.format(
-					"Azimuth: %.2f\nPitch: %.2f\nRoll: %.2f",
+					"Azimuth: %.1f\nPitch: %.1f\nRoll: %.1f",
 					Math.toDegrees(actual_orientation[0]), Math.toDegrees(actual_orientation[1]),
 					Math.toDegrees(actual_orientation[2]));
 			Log.d(TAG, out);
