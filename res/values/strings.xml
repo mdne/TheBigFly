@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+	<style name="CodeFont">
+		<item name="android:textColor">#008800</item>
+	</style>
+
+	<string name="app_name">TheBigFly</string>
+	<string name="hello">TheBigFly is coming..</string>
+</resources>
