@@ -27,7 +27,7 @@ public class FlySensor extends Activity implements SensorEventListener {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 		outView = new TextView(this);
-		outView = (TextView) findViewById(R.id.output);
+		outView = (TextView) findViewById(R.id.coord);
 
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
@@ -86,8 +86,8 @@ public class FlySensor extends Activity implements SensorEventListener {
 			SensorManager.getRotationMatrix(R, I, this.acc_vals, this.mag_vals);
 			SensorManager.getOrientation(R, this.actual_orientation);
 			String out = String.format(
-					"Azimuth: %.1f\nPitch: %.1f\nRoll: %.1f",
-					Math.toDegrees(actual_orientation[0]), Math.toDegrees(actual_orientation[1]),
+					"Pitch: %.1f\nRoll: %.1f",
+					Math.toDegrees(actual_orientation[1]),
 					Math.toDegrees(actual_orientation[2]));
 			Log.d(TAG, out);
 			outView.setText(out);
