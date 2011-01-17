@@ -8,35 +8,58 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 
 public class FlySensor extends Activity implements SensorEventListener {
 	private static final String TAG = "TheBigFly";
 	private SensorManager sensorManager;
-	private TextView outView;
+	private TextView outView_out, outView_coord;
 	private Sensor sensor;
 	private boolean sensorReady;
+	private float pitch;
+	private float roll;
 
 	private float[] mag_vals = new float[3];
 	private float[] acc_vals = new float[3];
 	private float[] actual_orientation = new float[3];
+	Connect connect = new Connect("192.168.0.7", 64444);
 
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
-		outView = new TextView(this);
-		outView = (TextView) findViewById(R.id.coord);
+        outView_out = (TextView) findViewById(R.id.output);
+		outView_coord = (TextView) findViewById(R.id.coord);
+
+		final ToggleButton tbutton = (ToggleButton) findViewById(R.id.connect);
+		tbutton.setOnClickListener(new ToggleButton.OnClickListener() {
+			public void onClick(View v) {				
+				connect.start();
+//				if(connect.isAlive()){
+//					outView_out.setText(connect.getInputline());
+//				}
+				
+				if (!tbutton.isChecked()) {
+					if(connect.isAlive()){
+						connect.getParams("dis");
+						connect.interrupt();
+					}					
+					outView_out.setText("disconnected from " + connect.getIp());
+				}				
+			}
+		});
 
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
 		sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-		sensorManager.registerListener(this, sensorManager
-				.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD),
+		sensorManager.registerListener(this,
+				sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD),
 				SensorManager.SENSOR_DELAY_NORMAL);
-		sensorManager.registerListener(this, sensorManager
-				.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
+		sensorManager.registerListener(this,
+				sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
 				SensorManager.SENSOR_DELAY_NORMAL);
 	}
 
@@ -85,13 +108,17 @@ public class FlySensor extends Activity implements SensorEventListener {
 			float[] I = new float[16];
 			SensorManager.getRotationMatrix(R, I, this.acc_vals, this.mag_vals);
 			SensorManager.getOrientation(R, this.actual_orientation);
-			String out = String.format(
-					"Pitch: %.1f\nRoll: %.1f",
+			String out = String.format("%.1f " + "%.1f",
 					Math.toDegrees(actual_orientation[1]),
 					Math.toDegrees(actual_orientation[2]));
 			Log.d(TAG, out);
-			outView.setText(out);
+			connect.getParams(out);
+			outView_coord.setText(out);
 
 		}
+	}
+
+	public void onDestroy() {
+		super.onDestroy();
 	}
 }

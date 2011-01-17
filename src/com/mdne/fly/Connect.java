@@ -1,87 +1,65 @@
 package com.mdne.fly;
 
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
 
-import android.app.Activity;
-import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.Button;
-import android.widget.EditText;
 
-public class Connect extends Activity {
+public class Connect implements Runnable {
 
-//    private EditText serverIp, serverPort;
-    private String serverIp;
-    private int serverPort;
-    private Button connect;
+	private String serverIp;
+	private int serverPort;
+	private String output_line;
+	private boolean connected;
 
-    private String serverIpAddress;
+	public Connect(String ip, int port) {
+		serverIp = ip;
+		serverPort = port;
+		output_line = null;
+		setConnected(false);
+	}
 
-    private boolean connected = false;
+	public String getIp() {
+		return serverIp;
+	}
 
-    private Handler handler = new Handler();
+	public void getParams(String s) {
+		this.output_line = s;
+	}
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-//        setContentView(R.layout.client);
+	public void setConnected(boolean connected) {
+		this.connected = connected;
+	}
 
-//        serverIp = (EditText) findViewById(R.id.server_ip);
-//        serverPort = (EditText) findViewById(R.id.server_port);
-        serverIp = "192.168.0.7";
-        serverPort = 1234;
-        connect = (Button) findViewById(R.id.connect);
-        connect.setOnClickListener(connectListener);
-    }
+	public boolean isConnected() {
+		return connected;
+	}
 
-    private OnClickListener connectListener = new OnClickListener() {
+	public void run() {
+		try {
+			InetAddress serverAddr = InetAddress.getByName(serverIp);
+			Socket socket = new Socket(serverAddr, serverPort);
+			setConnected(true);
+			while (!Thread.currentThread().isInterrupted()) {
+				try {
+					PrintWriter out = new PrintWriter(new BufferedWriter(
+							new OutputStreamWriter(socket.getOutputStream())),
+							true);
+					out.println(output_line);
+				} catch (Exception e) {
+					Log.e("ClientActivity", "S: Error", e);
+				}
+			}
+			socket.close();
+			setConnected(false);
+		} catch (Exception e) {
+			Log.e("ClientActivity", "C: Error", e);
+		}
+	}
 
-        @Override
-        public void onClick(View v) {
-            if (!connected) {
-                serverIpAddress = serverIp;
-                if (!serverIpAddress.equals("")) {
-                    Thread cThread = new Thread(new ClientThread());
-                    cThread.start();
-                }
-            }
-        }
-    };
-
-    public class ClientThread implements Runnable {
-
-        public void run() {
-            try {
-                InetAddress serverAddr = InetAddress.getByName(serverIpAddress);
-//               Integer serverport = Integer.parseInt(serverPort);
-                Log.d("ClientActivity", "C: Connecting...");
-                Socket socket = new Socket(serverAddr, serverPort);
-                connected = true;
-                while (connected) {
-                    try {
-                        Log.d("ClientActivity", "C: Sending command.");
-                        PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket
-                                    .getOutputStream())), true);
-                            // where you issue the commands
-                            out.println("Hey Server!");
-                            Log.d("ClientActivity", "C: Sent.");
-                    } catch (Exception e) {
-                        Log.e("ClientActivity", "S: Error", e);
-                    }
-                }
-                socket.close();
-                Log.d("ClientActivity", "C: Closed.");
-            } catch (Exception e) {
-                Log.e("ClientActivity", "C: Error", e);
-                connected = false;
-            }
-        }
-    }
 }
