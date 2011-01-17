@@ -28,7 +28,7 @@ public class Connect implements Runnable {
 		return serverIp;
 	}
 
-	public void getParams(String s) {
+	public void setParams(String s) {
 		this.output_line = s;
 	}
 
