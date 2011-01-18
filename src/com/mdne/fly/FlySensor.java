@@ -1,3 +1,10 @@
+/**
+ * TODO
+ * 1. проверка наличия соединения с инетом при старте программы и вывод диалога еси отсутствует или предложение подключить.
+ * 2. вывести управление сенсором в отдельный поток
+ * 3. добавить систему вывода системных сообщений в output на главной форме
+ */
+
 package com.mdne.fly;
 
 import android.app.Activity;
@@ -9,8 +16,8 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
-import android.widget.ToggleButton;
 
 public class FlySensor extends Activity implements SensorEventListener {
 	private static final String TAG = "TheBigFly";
@@ -20,38 +27,43 @@ public class FlySensor extends Activity implements SensorEventListener {
 	private boolean sensorReady;
 	private float pitch;
 	private float roll;
-
+	private Connect connect;
+	private Thread tconnect;
 	private float[] mag_vals = new float[3];
 	private float[] acc_vals = new float[3];
 	private float[] actual_orientation = new float[3];
-	Connect connect = new Connect("192.168.0.7", 64444);
+
+
 
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
-        outView_out = (TextView) findViewById(R.id.output);
-		outView_coord = (TextView) findViewById(R.id.coord);
 
-		final ToggleButton tbutton = (ToggleButton) findViewById(R.id.connect);
-		tbutton.setOnClickListener(new ToggleButton.OnClickListener() {
-			public void onClick(View v) {				
-				connect.start();
-//				if(connect.isAlive()){
-//					outView_out.setText(connect.getInputline());
-//				}
-				
-				if (!tbutton.isChecked()) {
-					if(connect.isAlive()){
-						connect.getParams("dis");
-						connect.interrupt();
-					}					
-					outView_out.setText("disconnected from " + connect.getIp());
-				}				
+		outView_out = (TextView) findViewById(R.id.output);
+		outView_coord = (TextView) findViewById(R.id.coord);
+		connect = new Connect("192.168.0.7", 64445);
+
+		final Button cbutton = (Button) findViewById(R.id.connect);
+		final Button dbutton = (Button) findViewById(R.id.disconnect);
+
+		dbutton.setOnClickListener(new Button.OnClickListener() {
+			public void onClick(View v) {
+				tconnect.interrupt();
+				outView_out.setText("disconnected");
 			}
 		});
 
+		cbutton.setOnClickListener(new Button.OnClickListener() {
+			public void onClick(View v) {
+				if(!connect.isConnected()){
+					tconnect = new Thread(connect);
+					tconnect.start();
+				}				
+				outView_out.setText("connected");
+			}
+		});
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
 		sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
@@ -112,8 +124,9 @@ public class FlySensor extends Activity implements SensorEventListener {
 					Math.toDegrees(actual_orientation[1]),
 					Math.toDegrees(actual_orientation[2]));
 			Log.d(TAG, out);
-			connect.getParams(out);
+
 			outView_coord.setText(out);
+			connect.getParams(out);
 
 		}
 	}
