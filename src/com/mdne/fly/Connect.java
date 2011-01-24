@@ -1,12 +1,8 @@
 package com.mdne.fly;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.net.UnknownHostException;
 
 import android.util.Log;
 
@@ -14,26 +10,29 @@ public class Connect implements Runnable {
 
 	private String serverIp;
 	private int serverPort;
-	private String output_line;
-	private boolean connected;
+	protected volatile boolean connected;
+	protected OutputArray arr;
+
+	public Connect() {
+		setConnected(false);
+		arr = new OutputArray();
+		// arr.setArray();
+
+	}
 
 	public Connect(String ip, int port) {
+		this();
 		serverIp = ip;
 		serverPort = port;
-		output_line = null;
-		setConnected(false);
+
 	}
 
 	public String getIp() {
 		return serverIp;
 	}
 
-	public void getParams(String s) {
-		this.output_line = s;
-	}
-
-	public void setConnected(boolean connected) {
-		this.connected = connected;
+	public void setConnected(boolean connect) {
+		this.connected = connect;
 	}
 
 	public boolean isConnected() {
@@ -44,22 +43,23 @@ public class Connect implements Runnable {
 		try {
 			InetAddress serverAddr = InetAddress.getByName(serverIp);
 			Socket socket = new Socket(serverAddr, serverPort);
-			setConnected(true);
-			while (!Thread.currentThread().isInterrupted()) {
+			OutputStream dos = socket.getOutputStream();
+//			 setConnected(true);
+			while (!connected) {
 				try {
-					PrintWriter out = new PrintWriter(new BufferedWriter(
-							new OutputStreamWriter(socket.getOutputStream())),
-							true);
-					out.println(output_line);
+					Thread.sleep(50);
+					dos.write(arr.getByteArray());				
 				} catch (Exception e) {
 					Log.e("ClientActivity", "S: Error", e);
 				}
 			}
+			dos.flush();
+			dos.close();
 			socket.close();
 			setConnected(false);
+			arr.setFlag(false);
 		} catch (Exception e) {
 			Log.e("ClientActivity", "C: Error", e);
 		}
 	}
-
 }

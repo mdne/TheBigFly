@@ -25,15 +25,15 @@ public class FlySensor extends Activity implements SensorEventListener {
 	private TextView outView_out, outView_coord;
 	private Sensor sensor;
 	private boolean sensorReady;
-	private float pitch;
-	private float roll;
-	private Connect connect;
+	protected Connect connect;
 	private Thread tconnect;
+	private CloseSocket closeSocket;
 	private float[] mag_vals = new float[3];
 	private float[] acc_vals = new float[3];
-	private float[] actual_orientation = new float[3];
+	protected float[] orientation = new float[3];
 
-
+	// private float now = 0;
+	// private float X = 0, Y = 0, Z = 0;
 
 	/** Called when the activity is first created. */
 	@Override
@@ -44,24 +44,34 @@ public class FlySensor extends Activity implements SensorEventListener {
 		outView_out = (TextView) findViewById(R.id.output);
 		outView_coord = (TextView) findViewById(R.id.coord);
 		connect = new Connect("192.168.0.7", 64445);
+		closeSocket = new CloseSocket();
 
 		final Button cbutton = (Button) findViewById(R.id.connect);
 		final Button dbutton = (Button) findViewById(R.id.disconnect);
 
 		dbutton.setOnClickListener(new Button.OnClickListener() {
 			public void onClick(View v) {
-				tconnect.interrupt();
+				connect.arr.setFlag(true);
+			    Thread tcs = new Thread(closeSocket);
+			    tcs.start();
+			    try {
+					tcs.join();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+//				connect.setConnected(true);
 				outView_out.setText("disconnected");
 			}
 		});
 
 		cbutton.setOnClickListener(new Button.OnClickListener() {
 			public void onClick(View v) {
-				if(!connect.isConnected()){
+				if (!connect.isConnected()) {
 					tconnect = new Thread(connect);
 					tconnect.start();
-				}				
-				outView_out.setText("connected");
+					outView_out.setText("connected");
+				}
 			}
 		});
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
@@ -118,20 +128,15 @@ public class FlySensor extends Activity implements SensorEventListener {
 			this.sensorReady = false;
 			float[] R = new float[16];
 			float[] I = new float[16];
+
 			SensorManager.getRotationMatrix(R, I, this.acc_vals, this.mag_vals);
-			SensorManager.getOrientation(R, this.actual_orientation);
-			String out = String.format("%.1f " + "%.1f",
-					Math.toDegrees(actual_orientation[1]),
-					Math.toDegrees(actual_orientation[2]));
-			Log.d(TAG, out);
-
-			outView_coord.setText(out);
-			connect.getParams(out);
-
+			SensorManager.getOrientation(R, this.orientation);
+			connect.arr.setArray(orientation);
 		}
 	}
 
 	public void onDestroy() {
 		super.onDestroy();
 	}
+
 }
