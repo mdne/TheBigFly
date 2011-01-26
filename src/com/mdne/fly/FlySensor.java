@@ -8,12 +8,18 @@
 package com.mdne.fly;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -22,45 +28,55 @@ import android.widget.TextView;
 public class FlySensor extends Activity implements SensorEventListener {
 	private static final String TAG = "TheBigFly";
 	private SensorManager sensorManager;
+	private ConnectivityManager checkConnection;
 	private TextView outView_out, outView_coord;
 	private Sensor sensor;
 	private boolean sensorReady;
 	protected Connect connect;
 	private Thread tconnect;
-	private CloseSocket closeSocket;
 	private float[] mag_vals = new float[3];
 	private float[] acc_vals = new float[3];
 	protected float[] orientation = new float[3];
-
-	// private float now = 0;
-	// private float X = 0, Y = 0, Z = 0;
 
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
+		
+		//Check connection, if it is off then a proposal to on it.
+		
+		checkConnection = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+		if (!checkConnection.getNetworkInfo(1).isConnectedOrConnecting()) { // 1 for WiFi, 0 for GPRS
+			AlertDialog alertDialog = new AlertDialog.Builder(this).create();
+			alertDialog.setTitle("Internet connection");
+			alertDialog.setMessage("WiFi is off, turn it on?");
+			alertDialog.setButton("OK", new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int which) {
+					startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS));
+				}
+			});
+			alertDialog.show();
+		}
 
 		outView_out = (TextView) findViewById(R.id.output);
 		outView_coord = (TextView) findViewById(R.id.coord);
 		connect = new Connect("192.168.0.7", 64445);
-		closeSocket = new CloseSocket();
 
-		final Button cbutton = (Button) findViewById(R.id.connect);
-		final Button dbutton = (Button) findViewById(R.id.disconnect);
+		final Button cbutton = (Button) findViewById(R.id.connect); // connect to a server
+		final Button dbutton = (Button) findViewById(R.id.disconnect); // stop a thread which transfer data to the server
+		final Button obutton = (Button) findViewById(R.id.off_server); // turns the server off (at first you have to turn the server off and then only stop a thread)
+		                                                                                                        // i agree it is stupid but it works as a first step.
 
-		dbutton.setOnClickListener(new Button.OnClickListener() {
+		obutton.setOnClickListener(new Button.OnClickListener() {
 			public void onClick(View v) {
 				connect.arr.setFlag(true);
-			    Thread tcs = new Thread(closeSocket);
-			    tcs.start();
-			    try {
-					tcs.join();
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-//				connect.setConnected(true);
+				outView_out.setText("server is off");
+			}
+		});
+		dbutton.setOnClickListener(new Button.OnClickListener() {
+			public void onClick(View v) {
+				tconnect.interrupt();
 				outView_out.setText("disconnected");
 			}
 		});
@@ -74,6 +90,7 @@ public class FlySensor extends Activity implements SensorEventListener {
 				}
 			}
 		});
+
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
 		sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
@@ -131,7 +148,7 @@ public class FlySensor extends Activity implements SensorEventListener {
 
 			SensorManager.getRotationMatrix(R, I, this.acc_vals, this.mag_vals);
 			SensorManager.getOrientation(R, this.orientation);
-			connect.arr.setArray(orientation);
+			connect.arr.setArray(orientation); // send data to the OutputArray to process it
 		}
 	}
 

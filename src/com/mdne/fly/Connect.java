@@ -1,5 +1,6 @@
 package com.mdne.fly;
 
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -10,12 +11,16 @@ public class Connect implements Runnable {
 
 	private String serverIp;
 	private int serverPort;
-	protected volatile boolean connected;
+	private boolean connected;
 	protected OutputArray arr;
+	private byte[] input;
+	private String status;
 
 	public Connect() {
 		setConnected(false);
 		arr = new OutputArray();
+		input = null;
+		status = "";
 		// arr.setArray();
 
 	}
@@ -39,25 +44,35 @@ public class Connect implements Runnable {
 		return connected;
 	}
 
+	public String status() {
+		return status;
+	}
+
 	public void run() {
 		try {
 			InetAddress serverAddr = InetAddress.getByName(serverIp);
 			Socket socket = new Socket(serverAddr, serverPort);
-			OutputStream dos = socket.getOutputStream();
-//			 setConnected(true);
-			while (!connected) {
+			OutputStream os = socket.getOutputStream();
+			InputStream is = socket.getInputStream();
+			arr.setFlag(false);
+			// is.read(input);
+			// if (Byte.valueOf("11", 16).equals(input[0])) {
+			// status = "connected";
+			// }
+			while (!Thread.currentThread().isInterrupted()) {
 				try {
-					Thread.sleep(50);
-					dos.write(arr.getByteArray());				
+					Thread.sleep(20);
+					os.write(arr.getByteArray());
 				} catch (Exception e) {
 					Log.e("ClientActivity", "S: Error", e);
 				}
 			}
-			dos.flush();
-			dos.close();
+			os.flush();
+			os.close();
 			socket.close();
 			setConnected(false);
 			arr.setFlag(false);
+			input[0] = (Byte) null;
 		} catch (Exception e) {
 			Log.e("ClientActivity", "C: Error", e);
 		}

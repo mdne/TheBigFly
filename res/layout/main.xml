@@ -4,13 +4,14 @@
 	android:layout_height="fill_parent">
 	<TextView android:text="output" android:id="@+id/output"
 		android:layout_width="wrap_content" android:layout_height="wrap_content"
-		android:layout_marginLeft="50px" android:layout_marginTop="50px"
+		android:layout_marginLeft="50px" android:layout_marginTop="30px"
 		android:textSize="20px"></TextView>
 	<TextView android:text="coord" android:id="@+id/coord"
 		android:layout_width="wrap_content" android:layout_height="wrap_content"
-		android:layout_marginLeft="50px" android:layout_marginTop="50px"
+		android:layout_marginLeft="50px" android:layout_marginTop="30px"
 		android:textSize="20px"></TextView>
-
+<Button android:id="@+id/off_server" android:textSize="20px"  android:layout_height="50px"
+ android:layout_width="130px" android:text="off_server" android:layout_gravity="right" ></Button>
 <Button android:id="@+id/disconnect" android:textSize="20px"  android:layout_height="50px"
  android:layout_width="130px" android:text="disconnect" android:layout_gravity="right" ></Button>
 <Button android:id="@+id/connect" android:textSize="20px"  android:text="connect" android:layout_gravity="right" android:layout_height="50px"
