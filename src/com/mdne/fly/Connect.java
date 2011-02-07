@@ -1,6 +1,5 @@
 package com.mdne.fly;
 
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -21,7 +20,6 @@ public class Connect implements Runnable {
 		arr = new OutputArray();
 		input = null;
 		status = "";
-		// arr.setArray();
 
 	}
 
@@ -52,13 +50,9 @@ public class Connect implements Runnable {
 		try {
 			InetAddress serverAddr = InetAddress.getByName(serverIp);
 			Socket socket = new Socket(serverAddr, serverPort);
+			socket.setSoTimeout(10000);
 			OutputStream os = socket.getOutputStream();
-			InputStream is = socket.getInputStream();
 			arr.setFlag(false);
-			// is.read(input);
-			// if (Byte.valueOf("11", 16).equals(input[0])) {
-			// status = "connected";
-			// }
 			while (!Thread.currentThread().isInterrupted()) {
 				try {
 					Thread.sleep(20);
