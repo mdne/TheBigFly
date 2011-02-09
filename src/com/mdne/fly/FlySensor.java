@@ -1,8 +1,9 @@
 /**
  * TODO
- * 1. проверка наличия соединения с инетом при старте программы и вывод диалога еси отсутствует или предложение подключить.
+ * 1. DONE// проверка наличия соединения с инетом при старте программы и вывод диалога еси отсутствует или предложение подключить.
  * 2. вывести управление сенсором в отдельный поток
  * 3. добавить систему вывода системных сообщений в output на главной форме
+ * 4. DONE// отключить функцию перехода тела в спящий режим во время работы программы.
  */
 
 package com.mdne.fly;
@@ -19,6 +20,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
@@ -31,6 +33,8 @@ public class FlySensor extends Activity implements SensorEventListener {
 	private ConnectivityManager checkConnection;
 	private TextView outView_out, outView_coord;
 	private Sensor sensor;
+	private PowerManager pm;
+	private PowerManager.WakeLock wl;
 	private boolean sensorReady;
 	protected Connect connect;
 	private Thread tconnect;
@@ -58,6 +62,9 @@ public class FlySensor extends Activity implements SensorEventListener {
 			});
 			alertDialog.show();
 		}
+		
+		pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+		wl = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "TBF");
 
 		outView_out = (TextView) findViewById(R.id.output);
 		outView_coord = (TextView) findViewById(R.id.coord);
@@ -66,7 +73,7 @@ public class FlySensor extends Activity implements SensorEventListener {
 		final Button cbutton = (Button) findViewById(R.id.connect); // connect to a server
 		final Button dbutton = (Button) findViewById(R.id.disconnect); // stop a thread which transfer data to the server
 		final Button obutton = (Button) findViewById(R.id.off_server); // turns the server off (at first you have to turn the server off and then only stop a thread)
-		                                                                                                        // i agree it is stupid but it works as a first step.
+		                                                               // i agree it is stupid but it works as a first step.
 
 		obutton.setOnClickListener(new Button.OnClickListener() {
 			public void onClick(View v) {
@@ -78,6 +85,7 @@ public class FlySensor extends Activity implements SensorEventListener {
 			public void onClick(View v) {
 				tconnect.interrupt();
 				outView_out.setText("disconnected");
+				wl.release();
 			}
 		});
 
@@ -87,6 +95,7 @@ public class FlySensor extends Activity implements SensorEventListener {
 					tconnect = new Thread(connect);
 					tconnect.start();
 					outView_out.setText("connected");
+					wl.acquire();
 				}
 			}
 		});
@@ -148,7 +157,8 @@ public class FlySensor extends Activity implements SensorEventListener {
 
 			SensorManager.getRotationMatrix(R, I, this.acc_vals, this.mag_vals);
 			SensorManager.getOrientation(R, this.orientation);
-			connect.arr.setArray(orientation); // send data to the OutputArray to process it
+			connect.arr.setArray(orientation); // send data to the OutputArray
+												// to process it
 		}
 	}
 
